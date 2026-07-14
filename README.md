@@ -1,22 +1,24 @@
 # 行動報修 Demo
 
-這是一個純前端的手機報修操作範例，包含：
+手機優先的設備報修介面，提供 QR Code 掃描、拍照、異常原因、Email、中英文介面及報修紀錄瀏覽。
 
-- 使用後鏡頭掃描 QR Code
-- 手機拍照或從相簿選擇，最多三張並可預覽／刪除
-- 填寫異常描述與聯絡人
-- 前端驗證及模擬產生 RMA 單號
+## 儲存模式
 
-## 啟動
+- GitHub Pages 公開版：紀錄以 JSON 結構儲存在目前瀏覽器的 `localStorage`，同一瀏覽器可在「瀏覽紀錄」頁查看。
+- Node 本機版：除了瀏覽器紀錄，也會透過 `POST /api/records` 將每筆 JSON 寫入 `records/` 目錄。
 
-相機 API 只能在 `localhost` 或 HTTPS 安全來源使用。請勿直接雙擊開啟 HTML。
+GitHub Pages 是靜態主機，無法直接寫入伺服器檔案。正式上線若需跨裝置、多人共用紀錄，應將 `/api/records` 接到資料庫或物件儲存服務。
+
+## 啟動可寫檔版本
+
+需要 Node.js 18 或更新版本：
 
 ```powershell
-python -m http.server 8080
+node server.js
 ```
 
-然後在電腦開啟 `http://localhost:8080`。若要用手機測試，可部署至 HTTPS 測試環境；同一區域網路的 HTTP IP 網址通常不允許存取相機。
+開啟 `http://localhost:8080`。相機 API 可在 `localhost` 或 HTTPS 使用。
 
-## 技術說明
+## 語系
 
-掃碼優先採用瀏覽器原生 `BarcodeDetector`，不支援時改用 CDN 載入的 `jsQR`。目前送出動作不會上傳資料；正式串接時可將表單欄位與照片組成 `FormData`，POST 到後端 API。
+瀏覽器語系以 `zh` 開頭時顯示繁體中文，其餘語系一律顯示英文。

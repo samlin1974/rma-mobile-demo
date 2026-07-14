@@ -9,77 +9,41 @@
 </head>
 <body>
   <main class="app-shell">
-    <header class="hero">
-      <span class="eyebrow">MOBILE RMA</span>
-      <h1>設備報修</h1>
-      <p>掃描設備 QR Code，拍下異常狀況後送出。</p>
-    </header>
-
+    <nav class="top-nav"><a class="nav-link active" href="index.html" data-i18n="newRepair">新增報修</a><a class="nav-link" href="records.html" data-i18n="viewRecords">瀏覽紀錄</a></nav>
+    <header class="hero"><span class="eyebrow">MOBILE RMA</span><h1 data-i18n="title">設備報修</h1><p data-i18n="subtitle">掃描設備 QR Code，拍下異常狀況後存檔。</p></header>
     <form id="repair-form">
       <section class="card">
-        <div class="section-heading">
-          <div><span class="step">01</span><h2>掃描設備</h2></div>
-          <span id="scan-status" class="status">尚未掃描</span>
-        </div>
-
-        <div id="scanner" class="scanner" hidden>
-          <video id="camera" playsinline muted></video>
-          <div class="scan-frame" aria-hidden="true"></div>
-          <button id="close-scanner" class="icon-button" type="button" aria-label="關閉相機">×</button>
-        </div>
-
-        <button id="start-scan" class="primary-button" type="button">
-          <span class="button-icon">⌗</span> 開啟相機掃描 QR Code
-        </button>
-        <p id="scan-message" class="hint" role="status">請允許瀏覽器使用相機。</p>
-
-        <label class="field">
-          <span>設備編號／QR Code 內容</span>
-          <input id="asset-code" name="assetCode" placeholder="掃描後自動帶入，也可手動輸入" required />
-        </label>
+        <div class="section-heading"><div><span class="step">01</span><h2 data-i18n="scanDevice">掃描設備</h2></div><span id="scan-status" class="status" data-i18n="notScanned">尚未掃描</span></div>
+        <div id="scanner" class="scanner" hidden><video id="camera" playsinline muted></video><div class="scan-frame" aria-hidden="true"></div><button id="close-scanner" class="icon-button" type="button" aria-label="關閉相機">×</button></div>
+        <button id="start-scan" class="primary-button" type="button"><span class="button-icon">⌗</span> <span data-i18n="openScanner">開啟相機掃描 QR Code</span></button>
+        <p id="scan-message" class="hint" role="status" data-i18n="cameraHint">請允許瀏覽器使用相機。</p>
+        <label class="field"><span data-i18n="assetCode">設備編號／QR Code 內容</span><input id="asset-code" name="assetCode" data-i18n-placeholder="assetPlaceholder" placeholder="掃描後自動帶入，也可手動輸入" required /></label>
       </section>
-
       <section class="card">
-        <div class="section-heading">
-          <div><span class="step">02</span><h2>拍攝異常</h2></div>
-          <span id="photo-count" class="status">0 / 3 張</span>
-        </div>
-
-        <label class="photo-button">
-          <input id="photo-input" type="file" accept="image/*" capture="environment" multiple />
-          <span class="camera-glyph">●</span>
-          <strong>拍照或選擇照片</strong>
-          <small>最多 3 張，單張建議小於 10 MB</small>
-        </label>
+        <div class="section-heading"><div><span class="step">02</span><h2 data-i18n="takePhotos">拍攝異常</h2></div><span id="photo-count" class="status">0 / 3 張</span></div>
+        <label class="photo-button"><input id="photo-input" type="file" accept="image/*" capture="environment" multiple /><span class="camera-glyph">●</span><strong data-i18n="choosePhotos">拍照或選擇照片</strong><small data-i18n="photoHint">必填，最多 3 張</small></label>
         <div id="photo-grid" class="photo-grid"></div>
       </section>
-
       <section class="card">
-        <div class="section-heading">
-          <div><span class="step">03</span><h2>問題描述</h2></div>
-        </div>
-        <label class="field">
-          <span>異常情形</span>
-          <textarea id="description" name="description" rows="4" placeholder="例如：設備啟動後有異音，且無法正常運轉…" required></textarea>
-        </label>
-        <label class="field">
-          <span>聯絡人</span>
-          <input id="contact" name="contact" placeholder="姓名或分機（選填）" />
-        </label>
+        <div class="section-heading"><div><span class="step">03</span><h2 data-i18n="reason1">異常原因</h2></div></div>
+        <label class="field"><span data-i18n="selectReason">請選擇原因</span><select id="reason-one" name="reasonOne" required><option value="" data-i18n="pleaseSelect">請選擇</option><option value="noise" data-i18n="noise">有異音</option><option value="leak" data-i18n="leak">漏水</option><option value="inactive" data-i18n="inactive">不作動</option></select></label>
       </section>
-
-      <button class="submit-button" type="submit">送出報修單</button>
+      <section class="card">
+        <div class="section-heading"><div><span class="step">04</span><h2 data-i18n="reason2">異常原因 2</h2></div></div>
+        <label class="field"><span data-i18n="selectReasonOptional">請選擇原因（選填）</span><select id="reason-two" name="reasonTwo"><option value="" data-i18n="pleaseSelect">請選擇</option><option value="noise" data-i18n="noise">有異音</option><option value="leak" data-i18n="leak">漏水</option><option value="inactive" data-i18n="inactive">不作動</option></select></label>
+      </section>
+      <section class="card">
+        <div class="section-heading"><div><span class="step">05</span><h2 data-i18n="description">問題描述</h2></div></div>
+        <label class="field"><span data-i18n="details">異常情形（選填）</span><textarea id="description" name="description" rows="4" data-i18n-placeholder="descriptionPlaceholder" placeholder="請補充設備的異常情形…"></textarea></label>
+      </section>
+      <section class="card">
+        <div class="section-heading"><div><span class="step">06</span><h2 data-i18n="email">您的電子郵件</h2></div></div>
+        <label class="field"><span data-i18n="emailLabel">電子郵件</span><input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" required /></label>
+      </section>
+      <button id="save-button" class="submit-button" type="submit" data-i18n="save">存檔</button>
     </form>
   </main>
-
-  <dialog id="result-dialog">
-    <div class="success-mark">✓</div>
-    <h2>報修資料已建立</h2>
-    <p id="result-text"></p>
-    <button id="reset-form" class="primary-button" type="button">建立另一筆</button>
-  </dialog>
-
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  <script src="app.js"></script>
+  <dialog id="result-dialog"><div class="success-mark">✓</div><h2 data-i18n="saved">紀錄已存檔</h2><p id="result-text"></p><div class="dialog-actions"><a class="primary-button link-button" href="records.html" data-i18n="viewRecords">瀏覽紀錄</a><button id="reset-form" class="secondary-button" type="button" data-i18n="createAnother">建立另一筆</button></div></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script><script src="i18n.js"></script><script src="app.js"></script>
 </body>
 </html>

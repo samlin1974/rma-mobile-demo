@@ -1,42 +1,33 @@
-const scanner = document.querySelector('#scanner');
-const video = document.querySelector('#camera');
-const startButton = document.querySelector('#start-scan');
-const closeButton = document.querySelector('#close-scanner');
-const message = document.querySelector('#scan-message');
-const assetCode = document.querySelector('#asset-code');
-const scanStatus = document.querySelector('#scan-status');
-const photoInput = document.querySelector('#photo-input');
-const photoGrid = document.querySelector('#photo-grid');
-const photoCount = document.querySelector('#photo-count');
-const form = document.querySelector('#repair-form');
-const dialog = document.querySelector('#result-dialog');
-
-let stream;
+const $ = selector => document.querySelector(selector);
+const scanner = $('#scanner');
+const video = $('#camera');
+const assetCode = $('#asset-code');
+const scanStatus = $('#scan-status');
+const message = $('#scan-message');
+const photoInput = $('#photo-input');
+const photoGrid = $('#photo-grid');
+const photoCount = $('#photo-count');
+const form = $('#repair-form');
+const dialog = $('#result-dialog');
+let stream, detector;
 let scanning = false;
 let photos = [];
-let detector;
 
 async function startScanner() {
   message.classList.remove('error');
-  if (!navigator.mediaDevices?.getUserMedia) {
-    showError('此瀏覽器無法開啟相機，請改用手機 Chrome / Safari，或手動輸入編號。');
-    return;
-  }
+  if (!navigator.mediaDevices?.getUserMedia) return showError(t('cameraUnsupported'));
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
-    });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
     video.srcObject = stream;
     await video.play();
     scanner.hidden = false;
-    startButton.hidden = true;
+    $('#start-scan').hidden = true;
     scanning = true;
-    message.textContent = '將 QR Code 對準框線，辨識完成後會自動關閉。';
+    message.textContent = t('aimQr');
     if ('BarcodeDetector' in window) detector = new BarcodeDetector({ formats: ['qr_code'] });
     requestAnimationFrame(scanFrame);
   } catch (error) {
-    showError(error.name === 'NotAllowedError' ? '相機權限被拒絕，請在瀏覽器設定中允許相機。' : `無法開啟相機：${error.message}`);
+    showError(error.name === 'NotAllowedError' ? t('cameraDenied') : `${t('cameraFailed')} ${error.message}`);
   }
 }
 
@@ -44,13 +35,10 @@ async function scanFrame() {
   if (!scanning) return;
   try {
     let value = '';
-    if (detector) {
-      const codes = await detector.detect(video);
-      value = codes[0]?.rawValue || '';
-    } else if (window.jsQR && video.readyState >= 2) {
+    if (detector) value = (await detector.detect(video))[0]?.rawValue || '';
+    else if (window.jsQR && video.readyState >= 2) {
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
       const context = canvas.getContext('2d', { willReadFrequently: true });
       context.drawImage(video, 0, 0);
       const image = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -58,95 +46,80 @@ async function scanFrame() {
     }
     if (value) {
       assetCode.value = value;
-      scanStatus.textContent = '掃描完成';
-      scanStatus.classList.add('ok');
-      message.textContent = `已讀取：${value}`;
-      navigator.vibrate?.(120);
-      stopScanner();
-      return;
+      scanStatus.textContent = t('scanComplete'); scanStatus.classList.add('ok');
+      message.textContent = `${t('readValue')} ${value}`;
+      navigator.vibrate?.(120); stopScanner(); return;
     }
-  } catch (error) {
-    console.debug('QR scan retry:', error);
-  }
+  } catch (error) { console.debug('QR scan retry:', error); }
   setTimeout(() => requestAnimationFrame(scanFrame), 180);
 }
 
 function stopScanner() {
-  scanning = false;
-  stream?.getTracks().forEach(track => track.stop());
-  stream = undefined;
-  video.srcObject = null;
-  scanner.hidden = true;
-  startButton.hidden = false;
+  scanning = false; stream?.getTracks().forEach(track => track.stop());
+  stream = undefined; video.srcObject = null; scanner.hidden = true; $('#start-scan').hidden = false;
 }
-
-function showError(text) {
-  message.textContent = text;
-  message.classList.add('error');
-  stopScanner();
-}
+function showError(text) { message.textContent = text; message.classList.add('error'); stopScanner(); }
 
 function renderPhotos() {
   photoGrid.innerHTML = '';
   photos.forEach((photo, index) => {
-    const item = document.createElement('div');
-    item.className = 'photo-item';
-    const image = document.createElement('img');
-    image.src = photo.url;
-    image.alt = `異常照片 ${index + 1}`;
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'remove-photo';
-    remove.setAttribute('aria-label', `移除照片 ${index + 1}`);
-    remove.textContent = '×';
-    remove.addEventListener('click', () => {
-      URL.revokeObjectURL(photos[index].url);
-      photos.splice(index, 1);
-      renderPhotos();
-    });
-    item.append(image, remove);
-    photoGrid.append(item);
+    const item = document.createElement('div'); item.className = 'photo-item';
+    const image = document.createElement('img'); image.src = photo.preview; image.alt = `${t('photo')} ${index + 1}`;
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove-photo'; remove.textContent = '×';
+    remove.addEventListener('click', () => { photos.splice(index, 1); renderPhotos(); });
+    item.append(image, remove); photoGrid.append(item);
   });
-  photoCount.textContent = `${photos.length} / 3 張`;
+  photoCount.textContent = `${photos.length} / 3 ${t('photosUnit')}`;
   photoCount.classList.toggle('ok', photos.length > 0);
 }
 
-photoInput.addEventListener('change', () => {
-  const remaining = 3 - photos.length;
-  [...photoInput.files].slice(0, remaining).forEach(file => {
-    photos.push({ file, url: URL.createObjectURL(file) });
+function resizePhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = reject;
+      image.onload = () => {
+        const scale = Math.min(1, 1280 / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas'); canvas.width = image.width * scale; canvas.height = image.height * scale;
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', .75));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
-  photoInput.value = '';
-  renderPhotos();
-});
+}
 
-assetCode.addEventListener('input', () => {
-  scanStatus.textContent = assetCode.value ? '已有設備編號' : '尚未掃描';
-  scanStatus.classList.toggle('ok', Boolean(assetCode.value));
+photoInput.addEventListener('change', async () => {
+  for (const file of [...photoInput.files].slice(0, 3 - photos.length)) photos.push({ name: file.name, preview: await resizePhoto(file) });
+  photoInput.value = ''; renderPhotos();
 });
+assetCode.addEventListener('input', () => { scanStatus.textContent = assetCode.value ? t('hasAssetCode') : t('notScanned'); scanStatus.classList.toggle('ok', !!assetCode.value); });
 
-form.addEventListener('submit', event => {
+async function saveRecord(record) {
+  const records = JSON.parse(localStorage.getItem('rma-records') || '[]');
+  records.unshift(record); localStorage.setItem('rma-records', JSON.stringify(records));
+  try {
+    const response = await fetch('/api/records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record) });
+    return response.ok ? 'server' : 'browser';
+  } catch { return 'browser'; }
+}
+
+form.addEventListener('submit', async event => {
   event.preventDefault();
   if (!form.reportValidity()) return;
-  if (!photos.length) {
-    alert('請至少拍攝或選擇一張異常照片。');
-    return;
-  }
+  if (!photos.length) return alert(t('photoRequired'));
   const ticket = `RMA-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${String(Date.now()).slice(-4)}`;
-  document.querySelector('#result-text').textContent = `單號：${ticket}\n設備：${assetCode.value}\n照片：${photos.length} 張\n\n此 Demo 僅模擬送出，尚未連接後端。`;
+  const record = { id: ticket, createdAt: new Date().toISOString(), assetCode: assetCode.value.trim(), reasonOne: $('#reason-one').value, reasonTwo: $('#reason-two').value || null, description: $('#description').value.trim(), email: $('#email').value.trim(), photos: photos.map(photo => photo.preview) };
+  $('#save-button').disabled = true;
+  const mode = await saveRecord(record);
+  $('#save-button').disabled = false;
+  $('#result-text').textContent = `${t('ticket')} ${ticket}\n${mode === 'server' ? t('serverSaved') : t('browserSaved')}`;
   dialog.showModal();
 });
 
-document.querySelector('#reset-form').addEventListener('click', () => {
-  dialog.close();
-  photos.forEach(photo => URL.revokeObjectURL(photo.url));
-  photos = [];
-  form.reset();
-  renderPhotos();
-  scanStatus.textContent = '尚未掃描';
-  scanStatus.classList.remove('ok');
-});
-
-startButton.addEventListener('click', startScanner);
-closeButton.addEventListener('click', stopScanner);
-window.addEventListener('pagehide', stopScanner);
+$('#reset-form').addEventListener('click', () => { dialog.close(); photos = []; form.reset(); renderPhotos(); scanStatus.textContent = t('notScanned'); scanStatus.classList.remove('ok'); });
+$('#start-scan').addEventListener('click', startScanner); $('#close-scanner').addEventListener('click', stopScanner); window.addEventListener('pagehide', stopScanner);
+renderPhotos();
