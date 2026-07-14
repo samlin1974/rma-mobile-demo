@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>行動報修 Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <span class="eyebrow">MOBILE RMA</span>
+      <h1>設備報修</h1>
+      <p>掃描設備 QR Code，拍下異常狀況後送出。</p>
+    </header>
+
+    <form id="repair-form">
+      <section class="card">
+        <div class="section-heading">
+          <div><span class="step">01</span><h2>掃描設備</h2></div>
+          <span id="scan-status" class="status">尚未掃描</span>
+        </div>
+
+        <div id="scanner" class="scanner" hidden>
+          <video id="camera" playsinline muted></video>
+          <div class="scan-frame" aria-hidden="true"></div>
+          <button id="close-scanner" class="icon-button" type="button" aria-label="關閉相機">×</button>
+        </div>
+
+        <button id="start-scan" class="primary-button" type="button">
+          <span class="button-icon">⌗</span> 開啟相機掃描 QR Code
+        </button>
+        <p id="scan-message" class="hint" role="status">請允許瀏覽器使用相機。</p>
+
+        <label class="field">
+          <span>設備編號／QR Code 內容</span>
+          <input id="asset-code" name="assetCode" placeholder="掃描後自動帶入，也可手動輸入" required />
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div><span class="step">02</span><h2>拍攝異常</h2></div>
+          <span id="photo-count" class="status">0 / 3 張</span>
+        </div>
+
+        <label class="photo-button">
+          <input id="photo-input" type="file" accept="image/*" capture="environment" multiple />
+          <span class="camera-glyph">●</span>
+          <strong>拍照或選擇照片</strong>
+          <small>最多 3 張，單張建議小於 10 MB</small>
+        </label>
+        <div id="photo-grid" class="photo-grid"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div><span class="step">03</span><h2>問題描述</h2></div>
+        </div>
+        <label class="field">
+          <span>異常情形</span>
+          <textarea id="description" name="description" rows="4" placeholder="例如：設備啟動後有異音，且無法正常運轉…" required></textarea>
+        </label>
+        <label class="field">
+          <span>聯絡人</span>
+          <input id="contact" name="contact" placeholder="姓名或分機（選填）" />
+        </label>
+      </section>
+
+      <button class="submit-button" type="submit">送出報修單</button>
+    </form>
+  </main>
+
+  <dialog id="result-dialog">
+    <div class="success-mark">✓</div>
+    <h2>報修資料已建立</h2>
+    <p id="result-text"></p>
+    <button id="reset-form" class="primary-button" type="button">建立另一筆</button>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
